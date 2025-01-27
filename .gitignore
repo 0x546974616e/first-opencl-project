@@ -1,0 +1,13 @@
+# Swap
+.*.swp
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+*~
+
+# Build Directory
+/build/**
+!/build/.gitkeep
