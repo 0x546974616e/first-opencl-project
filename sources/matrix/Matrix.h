@@ -11,10 +11,11 @@
 
 #include <CL/opencl.h> // Khronos API
 
-#include <stdbool.h> // bool, true, false
+#include <stdbool.h> // bool
 #include <stddef.h> // size_t
 
-#include "common/helper.h" // IN, OUT, INOUT, TR_CONCAT()
+#include "common/helper.h" // IN, OUT, INOUT, TR_CONCAT2(), TR_JOIN2()
+#include "common/OpenClContext.h" // OpenClContext{}
 
 #undef Matrix
 #undef TR_float
@@ -35,10 +36,8 @@ typedef struct Matrix() {
   size_t rows, rowPadding;
   size_t columns, columnPadding;
 
-  // size_t X, paddingX;
-  // size_t Y, paddingY;
-
-  TR_MATRIX_PRECISION* pointer; // host pointer or mapped
+  /// Host pointer or mapped device memory.
+  TR_MATRIX_PRECISION* pointer;
   cl_mem memory;
 } Matrix();
 
@@ -46,20 +45,35 @@ typedef struct Matrix() {
 ///
 ///
 bool Matrix(NewWithHostMemory)(
-  IN size_t rows,
-  IN size_t columns,
+  IN size_t rows,    IN size_t rowPadding,
+  IN size_t columns, IN size_t columnPadding,
+  IN OpenClContext* context,
   OUT Matrix()* matrix
 );
 
 ///
 ///
 ///
-bool Matrix(NewWithDeviceMemory)(IN size_t rows, IN size_t columns, OUT Matrix()* matrix);
+bool Matrix(NewWithDeviceMemory)(
+  IN size_t rows,    IN size_t rowPadding,
+  IN size_t columns, IN size_t columnPadding,
+  IN OpenClContext* context,
+  OUT Matrix()* matrix
+);
 
 ///
 ///
 ///
 bool Matrix(Release)(INOUT Matrix()* matrix);
+
+///
+///
+///
+bool Matrix(RandomInitialization)(
+  IN TR_MATRIX_PRECISION min,
+  IN TR_MATRIX_PRECISION max,
+  INOUT Matrix()* matrix
+);
 
 #endif // TR_MATRIX_PRECISION
 #endif // TR_MATRIX_H

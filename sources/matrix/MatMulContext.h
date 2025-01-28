@@ -70,7 +70,7 @@ bool MatMulContext_Release(INOUT MatMulContext* context);
 ///
 /// @pre `context` is not NULL and initialized.
 ///
-size_t MatMulContext_ComputeWaste(IN MatMulContext const* this);
+size_t MatMulContext_ComputeWaste(IN MatMulContext const* context);
 
 ///
 /// Displays informations about the given context.

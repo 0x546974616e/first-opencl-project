@@ -3,7 +3,7 @@
 #include <stdbool.h> // bool, true, false
 #include <stdio.h> // FILE, fprintf, stdout, stderr
 
-#include "common/helper.h" // IN, INOUT, OUT, TAB, LF
+#include "common/helper.h" // IN, INOUT, OUT, TAB, LF, RoundUp()
 #include "common/parse.h" // ParseNumbers()
 #include "matrix/MatMulContext.h" // MatMulContext{}
 
@@ -12,14 +12,6 @@
   TAB "      N      B B B B            P" LF \
   TAB "  A A A  *   B B B B  =   C C C C" LF \
   TAB "M A A A    N B B B B    M C C C C" LF \
-
-///
-/// Round `x` number up to `n`.
-///
-static size_t RoundUp(IN size_t x, IN size_t n) {
-  size_t r = x % n;
-  return r == 0 ? x : x + n - r;
-}
 
 bool MatMulContext_ArgumentsUsage(IN FILE* stream, char const* command) {
   assert(stream != NULL);
@@ -99,6 +91,10 @@ int MatMulContext_FromArguments(IN int argc, IN char* argv[], OUT MatMulContext*
     }
   }
 
+  // ╔╗ ┬  ┌─┐┌─┐┬┌─
+  // ╠╩╗│  │ ││  ├┴┐
+  // ╚═╝┴─┘└─┘└─┘┴ ┴
+
   if (blockSize != NULL) {
     size_t size = 0u;
     char const* blockCursor = blockSize;
@@ -117,6 +113,10 @@ int MatMulContext_FromArguments(IN int argc, IN char* argv[], OUT MatMulContext*
 
     this->blockSize = size;
   }
+
+  // ╔╦╗┌─┐┌┬┐┬─┐┬─┐┬
+  // ║║║├─┤ │ ├┬┘│┌┼┘
+  // ╩ ╩┴ ┴ ┴ ┴└─┴┴└─
 
   size_t sizes[3] = { 0u, 0u, 0u };
   char const* matrixCursor = matrixSize;
@@ -140,6 +140,10 @@ int MatMulContext_FromArguments(IN int argc, IN char* argv[], OUT MatMulContext*
   this->paddingM = RoundUp(this->M, this->blockSize) - this->M;
   this->paddingN = RoundUp(this->N, this->blockSize) - this->N;
   this->paddingP = RoundUp(this->P, this->blockSize) - this->P;
+
+  // ╔═╗┌─┐┌─┐┌┐┌╔═╗╦
+  // ║ ║├─┘├┤ │││║  ║
+  // ╚═╝┴  └─┘┘└┘╚═╝╩═╝
 
   if (device == NULL) { device = "GPU"; }
   switch (OpenClContext_FromString(device, &this->openCl)) {

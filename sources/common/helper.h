@@ -51,4 +51,10 @@
 
 #define UNUSED __attribute__((unused)) // [[maybe_unused]]
 
+/// Round `x` number up to `n`.
+static inline size_t RoundUp(IN size_t x, IN size_t n) {
+  size_t r = x % n;
+  return r == 0 ? x : x + n - r;
+}
+
 #endif // TR_HELPER_H

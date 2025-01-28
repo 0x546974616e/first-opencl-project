@@ -1,7 +1,7 @@
 #ifndef TR_MATRIX_MATMULPROGRAM_H
 #define TR_MATRIX_MATMULPROGRAM_H
 
-#include <stdbool.h> // bool, true, false
+#include <stdbool.h> // bool
 
 #include "common/helper.h" // IN
 #include "matrix/MatMulContext.h" // Self{}

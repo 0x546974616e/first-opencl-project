@@ -28,6 +28,7 @@
 
 #include "common/helper.h" // IN, TR_CONCAT, TR_PRINT(), TR_FAILED()
 #include "common/OpenCl.h" // TR_OPENCL_IMPORT()
+#include "common/OpenClProgram.h" // Self()
 #include "matrix/MatMulContext.h" // Self{}
 #include "matrix/MatMulProgram.h" // Self{}
 
@@ -105,14 +106,6 @@ static bool RUNMATMULPROGRAM(TR_MATRIX_PRECISION)(IN MatMulContext* this) {
   TR_MATRIX_PRECISION* B = malloc(BBytes); if (NULL == B) { goto outB; }
   TR_MATRIX_PRECISION* C = malloc(CBytes); if (NULL == C) { goto outC; }
 
-  TR_MATMUL_LOG(this, 1, "Create OpenCL Program.");
-  size_t sourceLength = (size_t) (matrixMatMulEnd - matrixMatMulStart); // TODO: Overflow.
-  program = clCreateProgramWithSource(context, 1, &matrixMatMulStart, &sourceLength, &error);
-  if (error != CL_SUCCESS || program == NULL) {
-    TR_FAILED("clCreateProgramWithSource()", error);
-    goto outProgram;
-  }
-
   #define TR_OPTIONS_SIZE 64
   TR_MATMUL_LOG(this, 1, "Generate Build Options.");
   char buildOptions[TR_OPTIONS_SIZE + 1] = { 0x0 };
@@ -120,18 +113,23 @@ static bool RUNMATMULPROGRAM(TR_MATRIX_PRECISION)(IN MatMulContext* this) {
   buildOptions[TR_OPTIONS_SIZE] = 0x0; // To be sure to avoid overflow.
   if (written >= TR_OPTIONS_SIZE) {
     TR_ERROR("The build options buffer is too small, abort.");
-    goto outBuild;
+    goto outOptions;
   }
 
-  TR_MATMUL_LOG(this, 1, "Build OpenCL Program.");
-  error = clBuildProgram(program, 0, NULL, buildOptions, NULL, NULL);
-  if (error != CL_SUCCESS) {
-    TR_FAILED("clBuildProgram()", error);
-    OpenClContext_DisplayBuildError(program, &this->openCl);
-    goto outBuild;
+  TR_MATMUL_LOG(this, 1, "Load OpenCL Program.");
+  size_t sourceLength = (size_t) (matrixMatMulEnd - matrixMatMulStart); // TODO: Overflow.
+  program = OpenClProgram_Build(&this->openCl, buildOptions, matrixMatMulStart, sourceLength);
+  if (program == NULL) {
+    goto outProgram;
   }
 
-  (void) device; (void) queue;
+  (void) context; (void) device; (void) queue;
+  (void) error;
+
+  // CreateBuffer(context)
+  // WriteBuffer(buffer, pointer, size)
+  // ReadBuffer(buffer, pointer, size)
+  // ReleaserBuffer(buffer)
 
   // https://stackoverflow.com/questions/57854782/how-opencl-memory-transfer-functions-work
 
@@ -183,15 +181,11 @@ static bool RUNMATMULPROGRAM(TR_MATRIX_PRECISION)(IN MatMulContext* this) {
 
   // row-major order
 
-outBuild:
-outProgram:
-  if (program != NULL) {
-    TR_MATMUL_LOG(this, 2, "Release OpenCL Program.");
-    if (CL_SUCCESS != (error = clReleaseProgram(program))) {
-      TR_FAILED("clReleaseProgram()", error);
-    }
-  }
+  TR_MATMUL_LOG(this, 2, "Release OpenCL Program.");
+  OpenClProgram_Release(program);
 
+outProgram:
+outOptions:
 outC: if (C != NULL) { free(C); }
 outB: if (B != NULL) { free(B); }
 outA: if (A != NULL) { free(A); }

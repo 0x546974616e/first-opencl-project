@@ -87,15 +87,4 @@ bool OpenClContext_EnableDoublePrecision(INOUT OpenClContext* context);
 ///
 bool OpenClContext_DisplayInformations(IN OpenClContext* context);
 
-///
-/// Displays build errors for a given OpenCL program.
-///
-/// @returns `true` on success, `false` otherwise.
-///
-/// @pre `program` is not NULL and initialized.
-/// @pre `context` is not NULL and initialized.
-/// @post Display errors on stderr.
-///
-bool OpenClContext_DisplayBuildError(IN cl_program program, IN OpenClContext* context);
-
 #endif // TR_COMMON_CONTEXT_H
