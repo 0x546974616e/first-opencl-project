@@ -35,41 +35,65 @@
 typedef struct Matrix() {
   size_t rows, rowPadding;
   size_t columns, columnPadding;
-
-  /// Host pointer or mapped device memory.
-  TR_MATRIX_PRECISION* pointer;
-  cl_mem memory;
+  TR_MATRIX_PRECISION* data; // Lazily allocated
+  OpenClContext* openCl;
+  cl_mem buffer;
 } Matrix();
 
 ///
+/// Create a new matrix (row-major order).
 ///
+/// The size (in bytes) of the matrix is given by:
+/// - `(rows + rowPadding) * (columns + columnPadding) * sizeof(float | double)`
 ///
-bool Matrix(NewWithHostMemory)(
-  IN size_t rows,    IN size_t rowPadding,
-  IN size_t columns, IN size_t columnPadding,
+/// Flags may be one of the following values:
+/// - `CL_MEM_READ_WRITE`
+/// - `CL_MEM_WRITE_ONLY`
+/// - `CL_MEM_READ_ONLY`
+///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `context` is not NULL.
+/// @pre `matrix` is not NULL.
+/// @pre The matrix dimensions are non-zero.
+///
+bool Matrix(Create)(
   IN OpenClContext* context,
+  IN size_t rows,
+  IN size_t columns,
+  IN size_t rowPadding,
+  IN size_t columnPadding,
+  IN cl_mem_flags flags,
   OUT Matrix()* matrix
 );
 
 ///
+/// Release the matrix.
 ///
+/// It is safe to give a matrix after an unsuccessful call to Matrix(Create)().
 ///
-bool Matrix(NewWithDeviceMemory)(
-  IN size_t rows,    IN size_t rowPadding,
-  IN size_t columns, IN size_t columnPadding,
-  IN OpenClContext* context,
-  OUT Matrix()* matrix
-);
-
+/// @returns `true` on success, `false` otherwise.
 ///
-///
+/// @pre `matrix` is not NULL.
 ///
 bool Matrix(Release)(INOUT Matrix()* matrix);
 
 ///
+/// Display informations about the given matrix.
+///
+/// @pre `matrix` is not NULL.
+/// @pre `name` may be NULL.
+/// @post Display on stdout.
+///
+bool Matrix(Display)(IN Matrix()* matrix, char const* name);
+
+// Matrix(Write)
+// Matrix(Read)
+
 ///
 ///
-bool Matrix(RandomInitialization)(
+///
+bool Matrix(Random)(
   IN TR_MATRIX_PRECISION min,
   IN TR_MATRIX_PRECISION max,
   INOUT Matrix()* matrix

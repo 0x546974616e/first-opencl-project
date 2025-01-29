@@ -100,6 +100,7 @@ bool OpenClContext_FromDeviceType(IN cl_device_type type, OUT OpenClContext* out
   //  ║║├┤ │┌┘││  ├┤
   // ═╩╝└─┘└┘ ┴└─┘└─┘
 
+  // TODO: Is the below assumption always true?
   // Given context should have only one device attached (otherwise CL_INVALID_VALUE is returned).
   error = clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(cl_device_id), &device, NULL);
   if (device == NULL || error != CL_SUCCESS) {

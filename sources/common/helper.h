@@ -51,6 +51,15 @@
 
 #define UNUSED __attribute__((unused)) // [[maybe_unused]]
 
+#define MIN(A, B) ( ( (A) < (B) ) ? (A) : (B) )
+#define MAX(A, B) ( ( (A) > (B) ) ? (A) : (B) )
+
+#define IS_POWER_OF_2(X) ( (X) != 0 && ( (X) & ( (X) - 1) ) == 0 )
+#define HAS_ONE_BIT_SET(X) IS_POWER_OF_2(X)
+
+#define STATICPTR(TYPE) TYPE const*
+#define MALLOCPTR(TYPE) TYPE*
+
 /// Round `x` number up to `n`.
 static inline size_t RoundUp(IN size_t x, IN size_t n) {
   size_t r = x % n;

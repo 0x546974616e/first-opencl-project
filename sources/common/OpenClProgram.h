@@ -9,7 +9,7 @@
 ///
 /// Loads and compiles an OpenCL program.
 ///
-/// @returns `true` on success, `false` otherwise.
+/// @returns A non-NULL program on success, NULL otherwise.
 ///
 /// @pre `context` is not NULL and already initialized.
 /// @pre `options` is not NULL and null-terminated.

@@ -224,7 +224,7 @@ bool MatMulContext_Display(IN MatMulContext* this) {
     , this->verbose
   );
 
-  if (this->verbose >= 1) {
+  if (this->verbose >= 2) {
     printf(TR_MATMUL_STRING(TAB2) LF);
   }
 
