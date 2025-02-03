@@ -81,23 +81,55 @@ bool Matrix(Release)(INOUT Matrix()* matrix);
 ///
 /// Display informations about the given matrix.
 ///
+/// @returns `true` on success, `false` otherwise.
+///
 /// @pre `matrix` is not NULL.
 /// @pre `name` may be NULL.
 /// @post Display on stdout.
 ///
-bool Matrix(Display)(IN Matrix()* matrix, char const* name);
-
-// Matrix(Write)
-// Matrix(Read)
+bool Matrix(Display)(IN Matrix()* matrix, IN char const* name);
 
 ///
+/// Display the first `rows` and `columns` of the given matrix.
 ///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `matrix` is not NULL.
+/// @post Display on stdout.
+///
+bool Matrix(DisplaySample)(IN Matrix()* matrix, IN size_t rows, IN size_t columns);
+
+///
+/// Randomly initialize the matrix with value between `minimum` and `maximum`.
+///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `matrix` is not NULL.
+/// @pre `maximum` is greater than `minimum`.
 ///
 bool Matrix(Random)(
-  IN TR_MATRIX_PRECISION min,
-  IN TR_MATRIX_PRECISION max,
-  INOUT Matrix()* matrix
+  INOUT Matrix()* matrix,
+  IN TR_MATRIX_PRECISION minimum,
+  IN TR_MATRIX_PRECISION maximun
 );
+
+///
+/// Write matrix to OpenCL device.
+///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `matrix` is not NULL.
+///
+bool Matrix(Write)(IN Matrix()* matrix);
+
+///
+/// Read matrix from OpenCL device.
+///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `matrix` is not NULL.
+///
+bool Matrix(Read)(INOUT Matrix()* matrix);
 
 #endif // TR_MATRIX_PRECISION
 #endif // TR_MATRIX_H

@@ -91,26 +91,95 @@ static bool RUNMATMULPROGRAM(TR_MATRIX_PRECISION)(IN MatMulContext* this) {
     goto outProgram;
   }
 
-  TR_MATMUL_LOG(this, 1, "Create Matrixes.");
-  success = success && Matrix(Create)(&this->openCl, this->M, this->N, this->paddingM, this->paddingN, CL_MEM_READ_ONLY,  &A);
-  success = success && Matrix(Create)(&this->openCl, this->N, this->P, this->paddingN, this->paddingP, CL_MEM_READ_ONLY,  &B);
+  TR_MATMUL_LOG(this, 1, "Create Matrixes A, B and C.");
+  success = success && Matrix(Create)(&this->openCl, this->M, this->N, this->paddingM, this->paddingN, CL_MEM_READ_ONLY , &A);
+  success = success && Matrix(Create)(&this->openCl, this->N, this->P, this->paddingN, this->paddingP, CL_MEM_READ_ONLY , &B);
   success = success && Matrix(Create)(&this->openCl, this->M, this->P, this->paddingM, this->paddingP, CL_MEM_WRITE_ONLY, &C);
 
+  TR_MATMUL_LOG(this, 1, "Initialize Matrixes A and B.");
+  success = success && Matrix(Random)(&A, 0, 1);
+  success = success && Matrix(Random)(&B, 0, 1);
+
+  TR_MATMUL_LOG(this, 1, "Write Matrixes A and B to OpenCL Device.");
+  success = success && Matrix(Write)(&A);
+  success = success && Matrix(Write)(&B);
+
   if (!success) {
+    TR_ERROR("One of the matrix procedures failed.");
     goto outMatrixes;
   }
 
   if (this->verbose >= 2) {
     printf(LF);
-    Matrix(Display)(&A, "A");
-    Matrix(Display)(&B, "B");
+    Matrix(Display)(&A, "A"); if (this->verbose >= 3) { Matrix(DisplaySample)(&A, 5, 8); }
+    Matrix(Display)(&B, "B"); if (this->verbose >= 3) { Matrix(DisplaySample)(&B, 5, 8); }
     Matrix(Display)(&C, "C");
   }
+
+  // https://github.com/KhronosGroup/OpenCL-Guide/blob/main/chapters/programming_opencl_kernels.md
 
   // clRetainKernel(kernel)
   // clReleaseKernel(kernel)
   // clRetainEvent(event)
   // clReleaseEvent(event)
+
+  /*
+    Event operator() ( const EnqueueArgs& args, Ts... ts) {
+        Event event;
+        setArgs<0>(std::forward<Ts>(ts)...);
+        args.queue_.enqueueNDRangeKernel(
+            kernel_,
+            args.offset_,
+            args.global_,
+            args.local_,
+            &args.events_,
+            &event);
+        return event;
+    }
+
+    template <typename T>
+    typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type
+        setArg(cl_uint index, const T &value)
+    {
+        return detail::errHandler(
+            ::clSetKernelArg(
+                object_,
+                index,
+                detail::KernelArgumentHandler<T>::size(value),
+                detail::KernelArgumentHandler<T>::ptr(value)),
+            __SET_KERNEL_ARGS_ERR);
+    }
+
+    cl_kernel
+    clGetKernelInfo()
+    clGetKernelArgInfo()
+    clGetKernelWorkGroupInfo()
+
+        cl_int err = detail::errHandler(
+            ::clEnqueueNDRangeKernel(
+                object_, kernel(), (cl_uint) global.dimensions(),
+                offset.dimensions() != 0 ? (const size_type*) offset : NULL,
+                (const size_type*) global,
+                local.dimensions() != 0 ? (const size_type*) local : NULL,
+                (events != NULL) ? (cl_uint) events->size() : 0,
+                (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
+                (event != NULL) ? &tmp : NULL),
+            __ENQUEUE_NDRANGE_KERNEL_ERR);
+
+
+    cl_int enqueueWaitForEvents(const vector<Event>& events) const CL_API_SUFFIX__VERSION_1_1_DEPRECATED
+    {
+        return detail::errHandler(
+            ::clEnqueueWaitForEvents(
+                object_,
+                (cl_uint) events.size(),
+                events.size() > 0 ? (const cl_event*) &events.front() : NULL),
+            __ENQUEUE_WAIT_FOR_EVENTS_ERR);
+    }
+
+    flush()
+    finish()
+  */
 
 outMatrixes:
   TR_MATMUL_LOG(this, 1, "Release Matrixes.");

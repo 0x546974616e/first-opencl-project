@@ -16,12 +16,37 @@
 #include <stdbool.h> // bool, true, false
 #include <stddef.h> // size_t
 #include <stdio.h> // fprintf(), printf()
-#include <stdlib.h> // malloc(), free()
+#include <stdlib.h> // malloc(), free(), rand()
 
 #include "common/helper.h" // IN, OUT, INOUT, TR_FAILED(), RoundUp()
 #include "common/OpenClBuffer.h" // OpenClBuffer{}
 #include "common/OpenClContext.h" // OpenClContext{}
 #include "matrix/Matrix.h" // Matrix(), Self{}
+
+///
+/// Returns tha matrix size (with padding) in bytes.
+///
+/// @pre `this` is not NULL.
+///
+static size_t Matrix(TotalSize)(IN Matrix()* this) {
+  size_t size = (this->rows + this->rowPadding) * (this->columns + this->columnPadding);
+  return size * sizeof(TR_MATRIX_PRECISION);
+}
+
+///
+/// Allocates matrix data (with padding) if not already done.
+///
+/// @returns `true` on success, `false` otherwise.
+///
+/// @pre `this` is not NULL.
+///
+static bool Matrix(AllocateData)(INOUT Matrix()* this) {
+  if (this->data == NULL) {
+    this->data = malloc(Matrix(TotalSize)(this));
+  }
+
+  return this->data != NULL;
+}
 
 bool Matrix(Create)(
   IN OpenClContext* openCl,
@@ -80,7 +105,7 @@ bool Matrix(Release)(INOUT Matrix()* matrix) {
   return success;
 }
 
-bool Matrix(Display)(IN Matrix()* matrix, char const* name) {
+bool Matrix(Display)(IN Matrix()* matrix, IN char const* name) {
   assert(matrix != NULL);
 
   static char floatingPoint[] = TR_STRINGIFY(TR_MATRIX_PRECISION);
@@ -117,15 +142,71 @@ bool Matrix(Display)(IN Matrix()* matrix, char const* name) {
   return true;
 }
 
+bool Matrix(DisplaySample)(IN Matrix()* matrix, IN size_t rows, IN size_t columns) {
+  assert(matrix != NULL);
+
+  rows = MIN(rows, matrix->rows);
+  columns = MIN(columns, matrix->columns);
+  TR_MATRIX_PRECISION* data = (TR_MATRIX_PRECISION*) matrix->data;
+  size_t width = matrix->columns + matrix->columnPadding;
+
+  if (data != NULL) {
+    for (size_t i = 0u; i < rows; ++i) {
+      printf("[%zu]", i);
+      for (size_t j = 0u; j < columns; ++j) {
+        // printf(" % 10.6f", data[i * width + j]);
+        printf(" %f", data[i * width + j]);
+      }
+      printf(" ..." LF);
+    }
+    printf("[...]" LFLF);
+  }
+
+  return true;
+}
+
 bool Matrix(Random)(
-  IN TR_MATRIX_PRECISION min,
-  IN TR_MATRIX_PRECISION max,
-  INOUT Matrix()* this
+  INOUT Matrix()* matrix,
+  IN TR_MATRIX_PRECISION minimum,
+  IN TR_MATRIX_PRECISION maximun
 ) {
-  assert(this != NULL && this->data != NULL);
-  (void) min; (void) max;
-  (void) this;
-  return false;
+  assert(matrix != NULL);
+  bool success = Matrix(AllocateData)(matrix);
+
+  if (success) {
+    TR_MATRIX_PRECISION* data = (TR_MATRIX_PRECISION*) matrix->data;
+    size_t width = matrix->columns + matrix->columnPadding;
+    for (size_t i = 0u; i < matrix->rows; ++i) {
+      for (size_t j = 0u; j < matrix->columns; ++j) {
+        TR_MATRIX_PRECISION value = (TR_MATRIX_PRECISION) rand() / (TR_MATRIX_PRECISION) RAND_MAX;
+        value = value * (maximun - minimum) + minimum;
+        data[i * width + j] = value;
+      }
+    }
+  }
+
+  return success;
+}
+
+bool Matrix(Write)(IN Matrix()* matrix) {
+  assert(matrix != NULL && matrix->data != NULL);
+  return OpenClBuffer_Write(
+    matrix->openCl->queue,
+    matrix->buffer,
+    matrix->data,
+    Matrix(TotalSize)(matrix)
+  );
+}
+
+bool Matrix(Read)(INOUT Matrix()* matrix) {
+  assert(matrix != NULL);
+  bool success = Matrix(AllocateData)(matrix);
+  return success && OpenClBuffer_Read(
+    matrix->openCl->queue,
+    matrix->buffer,
+    matrix->data,
+    Matrix(TotalSize)(matrix)
+  );
 }
 
 #endif // TR_MATRIX_PRECISION
